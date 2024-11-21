@@ -175,6 +175,7 @@ app.get('/list-downloads', (req, res) => {
         let fileListHtml = `
         <html>
         <head>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
             <title>downloadable files</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; text-align: center;}
@@ -194,10 +195,23 @@ app.get('/list-downloads', (req, res) => {
                         tr {
                         font-size: 2.5rem;
                         }
+                        .fa-sync-alt {
+                            font-size: 50px !important;
+                            margin-right: 1.3rem;
+                        }
             </style>
         </head>
         <body>
-            <h1>List of downloadable files</h1>
+            <div>
+                <h1>List of downloadable files <i class="fas fa-sync-alt" id="refreshIcon" style="cursor:pointer; float:right; font-size:24px;" title="Refresh"></i></h1>
+            </div>
+            
+            <script>
+        window.addEventListener('load', function () {
+            document.getElementById('refreshIcon').addEventListener('click', function() { location.reload(); });
+        });
+    </script>
+            
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr>

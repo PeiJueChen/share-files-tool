@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Files upload</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -164,13 +165,12 @@
     <div class="progress-container" id="progressContainer">
         <div class="progress-bar" id="progressBar"></div>
     </div>
+
     <form id="uploadForm">
         <label for="fileInput">Choose Files:</label>
         <input type="file" name="files" id="fileInput" multiple required>
         <button type="submit">Upload</button>
     </form>
-
-    
 
     <div class="file-list" id="fileList">
         <h2>Selected Files:</h2>
@@ -178,7 +178,7 @@
     </div>
 
     <div class="view-files">
-        <h2>View your files?<a href="/list-downloads">(Click here)</a></h2>
+        <h2>View your files? <a href="/list-downloads">(Click here)</a></h2>
     </div>
 
     <div class="qrcode-container">
@@ -194,45 +194,61 @@
                 document.getElementById('qrcode-container').innerHTML = `<img src="${qrCodeImgSrc}" alt="QR Code" />`;
             }
             loadQRCode();
-
+    
             function fileInputHandler() {
                 const fileInput = document.getElementById('fileInput');
                 const fileNamesList = document.getElementById('fileNames');
                 const progressContainer = document.getElementById('progressContainer');
                 const progressBar = document.getElementById('progressBar');
-
+    
+                let selectedFiles = []; // Array to hold selected files
+    
                 fileInput.addEventListener('change', function () {
                     fileNamesList.innerHTML = ''; // Clear existing file list
-                    const files = fileInput.files;
-                    for (let i = 0; i < files.length; i++) {
+                    selectedFiles = Array.from(fileInput.files).map(file => file.name); // Store the name of input files
+    
+                    // Render the selected files list
+                    selectedFiles.forEach((fileName) => {
                         const li = document.createElement('li');
-                        li.textContent = files[i].name;
-
+                        li.textContent = fileName;
+    
                         // Create delete button
                         const delButton = document.createElement('button');
                         delButton.textContent = 'Del'; // Set delete button text
                         delButton.className = 'delete-button'; // Add delete button style class
                         delButton.onclick = function() {
-                            li.remove(); // Remove file name from list
-                            // Optional: implement additional logic here, e.g., save to temporary data structure
+                            const index = selectedFiles.indexOf(fileName);
+                            if (index > -1) {
+                                selectedFiles.splice(index, 1); // Remove the file from the array
+                            }
+                            // Update the file input to reflect changes
+                            const dataTransfer = new DataTransfer();
+                            selectedFiles.forEach(name => {
+                                const file = Array.from(fileInput.files).find(f => f.name === name);
+                                if (file) {
+                                    dataTransfer.items.add(file); // Keep only the remaining files
+                                }
+                            });
+                            fileInput.files = dataTransfer.files; // Update the input files
+                            li.remove(); // Remove the file name from the list
                         };
-
+    
                         li.appendChild(delButton); // Attach delete button to list item
                         fileNamesList.appendChild(li); // Add to the list
-                    }
+                    });
                 });
-
+    
                 document.getElementById('uploadForm').addEventListener('submit', function(event) {
-                    event.preventDefault(); // Prevent the form from submitting normally
+                    event.preventDefault(); // Prevent the standard form submission
                     const formData = new FormData(this); // Create a FormData object
-
+    
                     // Show the progress bar
                     progressContainer.style.display = 'block';
                     progressBar.style.width = '0%'; // Reset width
-
+    
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', '/upload', true);
-
+    
                     // Update progress bar during upload
                     xhr.upload.onprogress = function(e) {
                         if (e.lengthComputable) {
@@ -240,23 +256,22 @@
                             progressBar.style.width = percentComplete + '%'; // Update progress bar width
                         }
                     };
-
+    
                     // Handle the response
                     xhr.onload = function() {
                         if (xhr.status === 200) {
-                            // Optionally, do something with the response
-                            // console.log(xhr.responseText);
                             setTimeout(() => {
-                                window.location.href = '/upload-success';
-                            }, 1000);
+                                window.location.href = '/upload-success'; // Redirect on success
+                            }, 500);
                         }
                     };
-
+    
                     xhr.send(formData); // Send the FormData
                 });
             }
             fileInputHandler();
-        })
+        });
     </script>
+    
 </body>
 </html>
