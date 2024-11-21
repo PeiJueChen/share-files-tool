@@ -3,7 +3,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const QRCode = require('qrcode');
+// const QRCode = require('qrcode');
+const qr = require('qr-image');
 const { exec } = require('child_process');
 const net = require('net');
 const app = express();
@@ -269,8 +270,12 @@ app.get('/qrcode', async (req, res) => {
     const ipAddress = getIpAddress();
     const url = `http://${ipAddress}:${PORT}`;
     try {
-        const qrCodeDataURL = await QRCode.toDataURL(url);
-        res.send(qrCodeDataURL); // 发送二维码的 Data URL
+        // const qrCodeDataURL = await QRCode.toDataURL(url);
+        // res.send(qrCodeDataURL); // 发送二维码的 Data URL
+        const qrCodeImage = qr.imageSync(url, { type: 'png' });
+        const base64QRImage = Buffer.from(qrCodeImage).toString('base64');
+        const dataUrl = `data:image/png;base64,${base64QRImage}`;
+        res.send(dataUrl);
     } catch (err) {
         res.status(500).send('An error occurred while generating the QR code');
     }

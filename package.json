@@ -1,6 +1,6 @@
 {
   "name": "share-files-tool",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "A simple file sharing application.",
   "main": "src/server.js",
   "bin": {
@@ -20,13 +20,18 @@
     "start": "node src/server.js",
     "start2": "nodemon src/server.js"
   },
-  "keywords": ["file", "sharing", "node", "application"],
+  "keywords": [
+    "file",
+    "sharing",
+    "node",
+    "application"
+  ],
   "author": "Jason Chan",
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.1",
     "multer": "^1.4.5-lts.1",
-    "qrcode": "^1.4.4"
+    "qr-image": "^3.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
