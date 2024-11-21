@@ -269,6 +269,10 @@ app.get('/qrcode', async (req, res) => {
     app.listen(PORT, async () => {
 
         console.log(`run at: http://localhost:${PORT} or ${url}`);
+
+
+        console.log(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir}`);
+
         if (os.platform() === 'win32') {
             // Windows
             exec(`start http://localhost:${PORT}`);
