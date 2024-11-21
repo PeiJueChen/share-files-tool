@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Files upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        /* Progress bar styles */
+        .progress-container {
+            width: 100%;
+            height: 2px;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 0px;
+            display: none; /* Initially hidden */
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: #5cb85c;
+            transition: width 0.3s;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+
+        a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .view-files {
+            margin-top: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qrcode-container {
+            text-align: center;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            text-align: left;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-list h2 {
+            margin: 0 0 10px;
+            font-size: 1.5rem;
+            color: #333;
+        }
+
+        .file-list ul {
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .file-list li {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+            transition: background-color 0.3s;
+        }
+
+        .file-list li:hover {
+            background-color: #eaeaea;
+        }
+
+        .qrcode-container img {
+            width: 150px;
+        }
+
+        /* Delete button style */
+        .delete-button {
+            margin-left: 10px; /* Left margin of 10px */
+            background-color: #d9534f; /* Delete button background color */
+            color: white;
+            border: none;
+            padding: 5px 10px; /* Delete button padding */
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            background-color: #c9302c; /* Change background color on hover */
+        }
+    </style>
+</head>
+<body>
+    <h1>Files upload</h1>
+
+    <!-- Progress Bar -->
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <form id="uploadForm">
+        <label for="fileInput">Choose Files:</label>
+        <input type="file" name="files" id="fileInput" multiple required>
+        <button type="submit">Upload</button>
+    </form>
+
+    
+
+    <div class="file-list" id="fileList">
+        <h2>Selected Files:</h2>
+        <ul id="fileNames"></ul>
+    </div>
+
+    <div class="view-files">
+        <h2>View your files?<a href="/list-downloads">(Click here)</a></h2>
+    </div>
+
+    <div class="qrcode-container">
+        <h2>Access the application</h2>
+        <div id="qrcode-container"></div>
+    </div>
+
+    <script>
+        window.addEventListener('load', function () {
+            async function loadQRCode() {
+                const response = await fetch('/qrcode');
+                const qrCodeImgSrc = await response.text();
+                document.getElementById('qrcode-container').innerHTML = `<img src="${qrCodeImgSrc}" alt="QR Code" />`;
+            }
+            loadQRCode();
+
+            function fileInputHandler() {
+                const fileInput = document.getElementById('fileInput');
+                const fileNamesList = document.getElementById('fileNames');
+                const progressContainer = document.getElementById('progressContainer');
+                const progressBar = document.getElementById('progressBar');
+
+                fileInput.addEventListener('change', function () {
+                    fileNamesList.innerHTML = ''; // Clear existing file list
+                    const files = fileInput.files;
+                    for (let i = 0; i < files.length; i++) {
+                        const li = document.createElement('li');
+                        li.textContent = files[i].name;
+
+                        // Create delete button
+                        const delButton = document.createElement('button');
+                        delButton.textContent = 'Del'; // Set delete button text
+                        delButton.className = 'delete-button'; // Add delete button style class
+                        delButton.onclick = function() {
+                            li.remove(); // Remove file name from list
+                            // Optional: implement additional logic here, e.g., save to temporary data structure
+                        };
+
+                        li.appendChild(delButton); // Attach delete button to list item
+                        fileNamesList.appendChild(li); // Add to the list
+                    }
+                });
+
+                document.getElementById('uploadForm').addEventListener('submit', function(event) {
+                    event.preventDefault(); // Prevent the form from submitting normally
+                    const formData = new FormData(this); // Create a FormData object
+
+                    // Show the progress bar
+                    progressContainer.style.display = 'block';
+                    progressBar.style.width = '0%'; // Reset width
+
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', '/upload', true);
+
+                    // Update progress bar during upload
+                    xhr.upload.onprogress = function(e) {
+                        if (e.lengthComputable) {
+                            const percentComplete = (e.loaded / e.total) * 100;
+                            progressBar.style.width = percentComplete + '%'; // Update progress bar width
+                        }
+                    };
+
+                    // Handle the response
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            // Optionally, do something with the response
+                            // console.log(xhr.responseText);
+                            setTimeout(() => {
+                                window.location.href = '/upload-success';
+                            }, 1000);
+                        }
+                    };
+
+                    xhr.send(formData); // Send the FormData
+                });
+            }
+            fileInputHandler();
+        })
+    </script>
+</body>
+</html>
