@@ -46,9 +46,9 @@ const storage = multer.diskStorage({
         const originalName = file.originalname;
         const ext = path.extname(originalName);
         const nameWithoutExt = path.basename(originalName, ext);
-        
+
         let newFileName = originalName;
-        let counter = 1; 
+        let counter = 1;
         while (fs.existsSync(path.join(uploadsDir, newFileName))) {
             const creationDate = new Date();
             const formattedDate = `${creationDate.getMonth() + 1}${creationDate.getDate()}${creationDate.getFullYear()}${creationDate.getHours().toString().padStart(2, '0')}${creationDate.getMinutes().toString().padStart(2, '0')}${creationDate.getSeconds().toString().padStart(2, '0')}`;
@@ -56,7 +56,7 @@ const storage = multer.diskStorage({
             counter++;
         }
 
-        cb(null, newFileName); 
+        cb(null, newFileName);
     }
 });
 
@@ -106,7 +106,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/upload', upload.array('files'), (req, res) => {
-    
+
     res.send(getSuccessHtml());
 });
 
@@ -136,6 +136,24 @@ app.get('/upload-success', (req, res) => {
 //     `;
 //     res.send(responseHtml);
 // });
+
+
+app.get('/download/:filename', (req, res) => {
+    const filePath = path.join(uploadsDir, req.params.filename);
+    fs.access(filePath, fs.constants.R_OK, (err) => {
+        if (err) {
+            console.error('File access error:', err);
+            return res.status(404).send('File not found or cannot be accessed.');
+        }
+        res.download(filePath, (err) => {
+            if (err) {
+                console.error('Error downloading file:', err);
+                res.status(500).send('Could not download file.');
+            }
+        });
+    });
+
+});
 
 app.get('/delete/:filename', (req, res) => {
     const filePath = path.join(uploadsDir, req.params.filename);
@@ -203,7 +221,7 @@ app.get('/list-downloads', (req, res) => {
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${formattedDate}</td>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${sizeInMB}</td>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">
-                        <a href="/uploads/${file}" download>Download</a> / 
+                        <a href="/download/${file}" download>Download</a> / 
                         <a href="/delete/${file}" onclick="return confirm('Surely want to delete?')">Delete</a>
                     </td>
                 </tr>`;
