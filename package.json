@@ -1,10 +1,10 @@
 {
   "name": "share-files-tool",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A simple file sharing application.",
   "main": "src/server.js",
   "bin": {
-    "share": "./src/start.js"
+    "sharer": "./src/start.js"
   },
   "engines": {
     "node": ">=10.1.0"

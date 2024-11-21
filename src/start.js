@@ -1,13 +1,16 @@
-#!/usr/bin/env node
+#!/usr/bin/env node 
 
 const path = require('path');
-const { exec } = require('child_process');
+const { spawn } = require('child_process'); 
 
-const serverPath = path.join(__dirname, 'server.js'); 
+const serverPath = path.join(__dirname, 'server.js');
 
-// run server.js
-exec(`node ${serverPath}`, { stdio: 'inherit' }, (error) => {
-    if (error) {
-        console.error(`Error starting the server: ${error.message}`);
-    }
+const subprocess = spawn('node', [serverPath], { stdio: 'inherit' });
+
+subprocess.on('error', (error) => {
+    console.error(`Error starting the server: ${error.message}`);
+});
+
+subprocess.on('exit', (code) => {
+    console.log(`Server exited with code: ${code}`);
 });
