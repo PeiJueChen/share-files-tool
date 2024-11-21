@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <title>Files upload</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Files upload</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
@@ -16,7 +17,8 @@
             height: 90vh;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             color: #333;
         }
 
@@ -55,7 +57,8 @@
             border-radius: 5px;
             overflow: hidden;
             margin-bottom: 0px;
-            display: none; /* Initially hidden */
+            display: none;
+            /* Initially hidden */
         }
 
         .progress-bar {
@@ -72,8 +75,8 @@
 
         li {
             margin: 10px 0;
-            display: flex; 
-            justify-content: space-between; 
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
@@ -144,20 +147,25 @@
 
         /* Delete button style */
         .delete-button {
-            margin-left: 10px; /* Left margin of 10px */
-            background-color: #d9534f; /* Delete button background color */
+            margin-left: 10px;
+            /* Left margin of 10px */
+            background-color: #d9534f;
+            /* Delete button background color */
             color: white;
             border: none;
-            padding: 5px 10px; /* Delete button padding */
+            padding: 5px 10px;
+            /* Delete button padding */
             border-radius: 5px;
             cursor: pointer;
         }
 
         .delete-button:hover {
-            background-color: #c9302c; /* Change background color on hover */
+            background-color: #c9302c;
+            /* Change background color on hover */
         }
     </style>
 </head>
+
 <body>
     <h1>Files upload</h1>
 
@@ -194,29 +202,30 @@
                 document.getElementById('qrcode-container').innerHTML = `<img src="${qrCodeImgSrc}" alt="QR Code" />`;
             }
             loadQRCode();
-    
+
             function fileInputHandler() {
                 const fileInput = document.getElementById('fileInput');
                 const fileNamesList = document.getElementById('fileNames');
                 const progressContainer = document.getElementById('progressContainer');
                 const progressBar = document.getElementById('progressBar');
-    
+
                 let selectedFiles = []; // Array to hold selected files
-    
+
                 fileInput.addEventListener('change', function () {
                     fileNamesList.innerHTML = ''; // Clear existing file list
                     selectedFiles = Array.from(fileInput.files).map(file => file.name); // Store the name of input files
-    
+
+
                     // Render the selected files list
                     selectedFiles.forEach((fileName) => {
                         const li = document.createElement('li');
                         li.textContent = fileName;
-    
+
                         // Create delete button
                         const delButton = document.createElement('button');
                         delButton.textContent = 'Del'; // Set delete button text
                         delButton.className = 'delete-button'; // Add delete button style class
-                        delButton.onclick = function() {
+                        delButton.onclick = function () {
                             const index = selectedFiles.indexOf(fileName);
                             if (index > -1) {
                                 selectedFiles.splice(index, 1); // Remove the file from the array
@@ -232,46 +241,46 @@
                             fileInput.files = dataTransfer.files; // Update the input files
                             li.remove(); // Remove the file name from the list
                         };
-    
+
                         li.appendChild(delButton); // Attach delete button to list item
                         fileNamesList.appendChild(li); // Add to the list
                     });
                 });
-    
-                document.getElementById('uploadForm').addEventListener('submit', function(event) {
+
+                document.getElementById('uploadForm').addEventListener('submit', function (event) {
                     event.preventDefault(); // Prevent the standard form submission
                     const formData = new FormData(this); // Create a FormData object
-    
+
                     // Show the progress bar
                     progressContainer.style.display = 'block';
                     progressBar.style.width = '0%'; // Reset width
-    
+
                     const xhr = new XMLHttpRequest();
                     xhr.open('POST', '/upload', true);
-    
+
                     // Update progress bar during upload
-                    xhr.upload.onprogress = function(e) {
+                    xhr.upload.onprogress = function (e) {
                         if (e.lengthComputable) {
                             const percentComplete = (e.loaded / e.total) * 100;
                             progressBar.style.width = percentComplete + '%'; // Update progress bar width
                         }
                     };
-    
+
                     // Handle the response
-                    xhr.onload = function() {
+                    xhr.onload = function () {
                         if (xhr.status === 200) {
                             setTimeout(() => {
                                 window.location.href = '/upload-success'; // Redirect on success
                             }, 500);
                         }
                     };
-    
                     xhr.send(formData); // Send the FormData
                 });
             }
             fileInputHandler();
         });
     </script>
-    
+
 </body>
+
 </html>

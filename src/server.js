@@ -9,6 +9,7 @@ const { exec } = require('child_process');
 const net = require('net');
 const app = express();
 
+let PORT = 3000;
 
 const isPortAvailable = (port) => {
     return new Promise((resolve) => {
@@ -23,6 +24,12 @@ const isPortAvailable = (port) => {
 
 // 1024 - 65535
 const getRandomPort = async () => {
+    // console.log("process.argv:",process.env['npm_lifecycle_script']);
+    
+    if (process.env['npm_lifecycle_script'] && process.env['npm_lifecycle_script'].includes('nodemon')) {
+        return 3000;
+    } 
+
     let port;
     let isAvailable = false;
 
@@ -41,7 +48,7 @@ try {
     }
 } catch (error) {
     console.log(error);
-    console.log(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir}`);
+    redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir}`);
 }
 
 
@@ -55,12 +62,10 @@ const storage = multer.diskStorage({
         const nameWithoutExt = path.basename(originalName, ext);
 
         let newFileName = originalName;
-        let counter = 1;
-        while (fs.existsSync(path.join(uploadsDir, newFileName))) {
+        if (fs.existsSync(path.join(uploadsDir, newFileName))) {
             const creationDate = new Date();
             const formattedDate = `${creationDate.getMonth() + 1}${creationDate.getDate()}${creationDate.getFullYear()}${creationDate.getHours().toString().padStart(2, '0')}${creationDate.getMinutes().toString().padStart(2, '0')}${creationDate.getSeconds().toString().padStart(2, '0')}`;
             newFileName = `${nameWithoutExt}_${formattedDate}${ext}`;
-            counter++;
         }
 
         cb(null, newFileName);
@@ -76,6 +81,7 @@ function getSuccessHtml() {
     const responseHtml = `
         <html>
         <head>
+            <meta charset="UTF-8">
             <title>successfully</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; text-align: center;}
@@ -182,6 +188,7 @@ app.get('/list-downloads', (req, res) => {
         let fileListHtml = `
         <html>
         <head>
+            <meta charset="UTF-8">
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
             <title>downloadable files</title>
             <style>
@@ -239,9 +246,9 @@ app.get('/list-downloads', (req, res) => {
             fileListHtml += `
                 <tr>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${file}</td>
-                    <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${formattedDate}</td>
+                    <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word;">${formattedDate}</td>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${sizeInMB}</td>
-                    <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">
+                    <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word;">
                         <a href="/download/${file}" download>Download</a> / 
                         <a href="/delete/${file}" onclick="return confirm('Surely want to delete?')">Delete</a>
                     </td>
@@ -258,6 +265,14 @@ app.get('/list-downloads', (req, res) => {
     });
 });
 
+const log = (msg) => {
+    console.log(`\x1b[32m ${msg} \x1b[0m`);
+};
+
+const redlog = (msg) => {
+    console.log(`\x1b[31m ${msg} \x1b[0m`);
+}
+
 const getIpAddress = () => {
     const networkInterfaces = os.networkInterfaces();
     for (const interfaceName in networkInterfaces) {
@@ -270,7 +285,6 @@ const getIpAddress = () => {
     return '127.0.0.1';
 };
 
-let PORT;
 
 app.get('/qrcode', async (req, res) => {
     const ipAddress = getIpAddress();
@@ -293,10 +307,9 @@ app.get('/qrcode', async (req, res) => {
     const url = `http://${ipAddress}:${PORT}`;
     app.listen(PORT, async () => {
 
-        console.log(`run at: http://localhost:${PORT} or ${url}`);
+        log(`\nrun at: ${url}`);
 
-
-        console.log(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir}`);
+        redlog(`\nIf catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir} \n`);
 
         if (os.platform() === 'win32') {
             // Windows
@@ -305,7 +318,7 @@ app.get('/qrcode', async (req, res) => {
             // macOS
             exec(`open http://localhost:${PORT}`);
         } else {
-            console.log('The function of automatically opening the browser is not implemented, for non-Windows and macOS systems');
+            redlog('The function of automatically opening the browser is not implemented, for non-Windows and macOS systems');
         }
     });
 })();
