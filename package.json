@@ -1,6 +1,6 @@
 {
   "name": "share-files-tool",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "A simple file sharing application.",
   "main": "src/server.js",
   "bin": {
@@ -26,7 +26,7 @@
   "dependencies": {
     "express": "^4.21.1",
     "multer": "^1.4.5-lts.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.4.4"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
