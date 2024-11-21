@@ -35,9 +35,15 @@ const getRandomPort = async () => {
 
 
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
+try {
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir);
+    }
+} catch (error) {
+    console.log(error);
+    console.log(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir}`);
 }
+
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
