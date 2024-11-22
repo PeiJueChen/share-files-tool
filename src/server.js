@@ -48,7 +48,7 @@ try {
     }
 } catch (error) {
     console.log(error);
-    redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir}`);
+    redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${__dirname}`);
 }
 
 
@@ -309,7 +309,7 @@ app.get('/qrcode', async (req, res) => {
 
         log(`\nrun at: ${url}`);
 
-        redlog(`\nIf catch a permission error, try to run with sudo: sudo chmod -R 777 ${uploadsDir} \n`);
+        redlog(`\nIf catch a permission error, try to run with sudo: sudo chmod -R 777 ${__dirname} \n`);
 
         if (os.platform() === 'win32') {
             // Windows
