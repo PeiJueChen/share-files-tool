@@ -6,6 +6,7 @@
   "bin": {
     "sharer": "./src/start.js"
   },
+  "git": "https://github.com/PeiJueChen/share-files-tool",
   "engines": {
     "node": ">=10.1.0"
   },
