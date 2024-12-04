@@ -277,7 +277,7 @@ const getIpAddress = () => {
     const networkInterfaces = os.networkInterfaces();
     for (const interfaceName in networkInterfaces) {
         for (const iface of networkInterfaces[interfaceName]) {
-            if (iface.family === 'IPv4' && !iface.internal) {
+            if (iface.family === 'IPv4' && !iface.internal && iface.address.startsWith('192.168')) {
                 return iface.address;
             }
         }
