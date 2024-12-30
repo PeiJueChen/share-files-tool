@@ -1,6 +1,6 @@
 {
   "name": "share-files-tool",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "A simple file sharing application.",
   "main": "src/server.js",
   "bin": {
@@ -31,7 +31,6 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.21.1",
-    "get-ip": "^2.0.0",
     "multer": "^1.4.5-lts.1",
     "qr-image": "^3.2.0"
   },

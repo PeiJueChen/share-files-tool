@@ -8,7 +8,7 @@ const qr = require('qr-image');
 const { exec } = require('child_process');
 const net = require('net');
 const app = express();
-const getIp = require('get-ip');
+const child_process = require("child_process");
 
 app.use(express.json());
 
@@ -302,24 +302,49 @@ const redlog = (msg) => {
     console.log(`\x1b[31m ${msg} \x1b[0m`);
 }
 
-const getIpAddress = () => {
+const runCommand = (command) => {
+    return new Promise((resolve, reject) => {
+        child_process.exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(stdout + stderr);
+            }
+            else {
+                resolve(stdout);
+            }
+        });
+    });
+}
 
+let currentIp;
+const getIpAddress = async () => {
+
+    if (currentIp) return currentIp;
     const networkInterfaces = os.networkInterfaces();
     for (const interfaceName in networkInterfaces) {
         for (const iface of networkInterfaces[interfaceName]) {
             if (iface.family === 'IPv4' && !iface.internal && iface.address.startsWith('192.168')) {
-                return iface.address;
+                currentIp = iface.address;
+                return currentIp;
             }
         }
     }
 
-    const ips = getIp();
-    return ips?.length > 0 ? ips[0] : '127.0.0.1';
+    if (os.platform() === 'darwin') {
+        try {
+            const ip = await runCommand('ipconfig getifaddr en0');
+            currentIp = ip.trim();
+            return currentIp;
+        } catch (error) {
+            
+        }
+    }
+    currentIp = '127.0.0.1';
+    return currentIp;
 };
 
 
 app.get('/qrcode', async (req, res) => {
-    const ipAddress = getIpAddress();
+    const ipAddress = await getIpAddress();
     const url = `http://${ipAddress}:${PORT}`;
     try {
         // const qrCodeDataURL = await QRCode.toDataURL(url);
@@ -335,7 +360,7 @@ app.get('/qrcode', async (req, res) => {
 
 (async () => {
     PORT = await getRandomPort();
-    const ipAddress = getIpAddress();
+    const ipAddress = await getIpAddress();
     const url = `http://${ipAddress}:${PORT}`;
     app.listen(PORT, async () => {
 
