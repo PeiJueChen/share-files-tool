@@ -9,6 +9,11 @@ const { exec } = require('child_process');
 const net = require('net');
 const app = express();
 const child_process = require("child_process");
+const http = require('http');
+const socketIo = require('socket.io');
+
+const server = http.createServer(app);
+const io = socketIo(server);
 
 app.use(express.json());
 
@@ -54,6 +59,32 @@ try {
     console.log(error);
     redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${__dirname}`);
 }
+
+// 监听 uploads 目录
+fs.watch(uploadsDir, (eventType, filename) => {
+    // if (filename) {
+    //     console.log(`Event type: ${eventType}, filename: ${filename}`);
+    //     // 当 uploads 目录内有文件变化时，推送更新到所有连接的客户端
+    //     io.emit('uploadsUpdated', { eventType, filename });
+    // }
+    io.emit('uploadsUpdated', true);
+});
+
+
+function readClipboardContent() {
+    return fs.readFileSync(clipboardPath, 'utf8');
+}
+
+fs.watchFile(clipboardPath, (curr, prev) => {
+    
+    const content = readClipboardContent();
+    io.emit('clipboardUpdated', content);
+});
+
+io.on('connection', (socket) => {
+    socket.emit('clipboardUpdated', readClipboardContent());
+});
+
 
 
 const storage = multer.diskStorage({
@@ -218,6 +249,7 @@ app.get('/list-downloads', (req, res) => {
                             margin-right: 1.3rem;
                         }
             </style>
+            <script src="/socket.io/socket.io.js"></script>
         </head>
         <body>
             <div>
@@ -227,6 +259,13 @@ app.get('/list-downloads', (req, res) => {
             <script>
         window.addEventListener('load', function () {
             document.getElementById('refreshIcon').addEventListener('click', function() { location.reload(); });
+
+            if (io) {
+                const socket = io();
+                socket.on('uploadsUpdated', (data) => {
+                    location.reload();
+                });
+            }
         });
     </script>
             
@@ -362,7 +401,7 @@ app.get('/qrcode', async (req, res) => {
     PORT = await getRandomPort();
     const ipAddress = await getIpAddress();
     const url = `http://${ipAddress}:${PORT}`;
-    app.listen(PORT, async () => {
+    server.listen(PORT, async () => {
 
         log(`\nrun at: ${url}`);
 
