@@ -313,8 +313,8 @@ const getIpAddress = () => {
         }
     }
 
-    const ip = getIp();
-    return ipip?.length > 0 ? ip[0] : '127.0.0.1';
+    const ips = getIp();
+    return ips?.length > 0 ? ip[0] : '127.0.0.1';
 };
 
 
