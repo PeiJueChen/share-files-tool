@@ -314,7 +314,7 @@ const getIpAddress = () => {
     }
 
     const ips = getIp();
-    return ips?.length > 0 ? ip[0] : '127.0.0.1';
+    return ips?.length > 0 ? ips[0] : '127.0.0.1';
 };
 
 
