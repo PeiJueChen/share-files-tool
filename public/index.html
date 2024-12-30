@@ -13,8 +13,8 @@
             padding: 20px;
             background-color: #f4f4f4;
             position: relative;
-            width: 90vw;
-            height: 90vh;
+            /* width: 90vw; */
+            /* height: 90vh; */
         }
 
         h1,
@@ -164,6 +164,54 @@
             /* Change background color on hover */
         }
     </style>
+    <style>
+        .share-buttons {
+            max-width: 400px;
+            margin: 2rem auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .share-buttons button {
+            background-color: #4CAF50;
+            /* 绿色 */
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .share-buttons button:hover {
+            background-color: #45a049;
+            /* 深绿色 */
+        }
+
+        .share-buttons textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            /* 禁止调整大小 */
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .share-buttons textarea:focus {
+            border-color: #4CAF50;
+            /* 聚焦时框线变为绿色 */
+            outline: none;
+            /* 去掉默认的轮廓 */
+        }
+    </style>
 </head>
 
 <body>
@@ -192,6 +240,13 @@
     <div class="qrcode-container">
         <h2>Access the application</h2>
         <div id="qrcode-container"></div>
+    </div>
+
+    <div class="share-buttons">
+        <button id="shareClipboard">Share Content</button>
+        <button id="getClipboard">Get Content</button>
+        <button id="clearClipboard">Clear Content</button>
+        <textarea id="clipboardContent" rows="4" cols="50" placeholder="Paste your content here..."></textarea>
     </div>
 
     <script>
@@ -278,6 +333,63 @@
                 });
             }
             fileInputHandler();
+
+            document.getElementById('shareClipboard').addEventListener('click', () => {
+                shareClipboard();
+            });
+
+
+            const shareClipboard = async () => {
+                const content = document.getElementById('clipboardContent').value;
+                if (!content) {
+                    alert("Please enter content to share.");
+                    return;
+                }
+                fetch(new Request("/shareClipboard", {
+                    method: "POST",
+                    body: JSON.stringify({ content: content || "" }),
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                })).then(response => response.json())
+                    .then(data => {
+                        if (data?.content) {
+
+                            alert(data.message);
+
+                        }
+                    });
+
+            };
+
+
+            const fetctClipboard = () => {
+                fetch('/getClipboard')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('clipboardContent').value = data.content;
+                    });
+            }
+            document.getElementById('getClipboard').addEventListener('click', () => {
+                fetctClipboard();
+            });
+
+            document.getElementById('clearClipboard').addEventListener('click', () => {
+                fetch('/clearClipboard', {
+                    method: 'POST'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('clipboardContent').value = '';
+                        navigator.clipboard?.writeText("");
+                    })
+                    .catch(error => {
+                        alert("clearClipboard error: " + error.message);
+                    });
+            });
+
+            fetctClipboard();
+
         });
     </script>
 

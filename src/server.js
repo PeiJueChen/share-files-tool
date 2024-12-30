@@ -8,6 +8,9 @@ const qr = require('qr-image');
 const { exec } = require('child_process');
 const net = require('net');
 const app = express();
+const getIp = require('get-ip');
+
+app.use(express.json());
 
 let PORT = 3000;
 
@@ -25,10 +28,10 @@ const isPortAvailable = (port) => {
 // 1024 - 65535
 const getRandomPort = async () => {
     // console.log("process.argv:",process.env['npm_lifecycle_script']);
-    
+
     if (process.env['npm_lifecycle_script'] && process.env['npm_lifecycle_script'].includes('nodemon')) {
         return 3000;
-    } 
+    }
 
     let port;
     let isAvailable = false;
@@ -42,6 +45,7 @@ const getRandomPort = async () => {
 
 
 const uploadsDir = path.join(__dirname, 'uploads');
+const clipboardPath = path.join(__dirname, 'clipboard.txt');
 try {
     if (!fs.existsSync(uploadsDir)) {
         fs.mkdirSync(uploadsDir);
@@ -265,6 +269,31 @@ app.get('/list-downloads', (req, res) => {
     });
 });
 
+// 路由：共享粘贴板
+app.post('/shareClipboard', async (req, res) => {
+    try {
+        const content = req.body?.content;
+        
+        fs.writeFileSync(clipboardPath, content || "", 'utf8');
+
+        res.json({ message: 'shared: ' + content , content });
+    } catch (error) {
+
+        res.status(500).json({ message: 'Failed to read clipboard contents:', error });
+    }
+});
+
+// 路由：获取粘贴板
+app.get('/getClipboard', (req, res) => {
+    const content = fs.readFileSync(clipboardPath, 'utf8');
+    
+    res.json({ content: content || "" });
+});
+app.post('/clearClipboard', (req, res) => {
+    fs.writeFileSync(clipboardPath, '', 'utf8'); // 清空文件内容
+    res.json({ message: 'cleared clipboard' });
+});
+
 const log = (msg) => {
     console.log(`\x1b[32m ${msg} \x1b[0m`);
 };
@@ -274,6 +303,7 @@ const redlog = (msg) => {
 }
 
 const getIpAddress = () => {
+
     const networkInterfaces = os.networkInterfaces();
     for (const interfaceName in networkInterfaces) {
         for (const iface of networkInterfaces[interfaceName]) {
@@ -282,7 +312,9 @@ const getIpAddress = () => {
             }
         }
     }
-    return '127.0.0.1';
+
+    const ip = getIp();
+    return ipip?.length > 0 ? ip[0] : '127.0.0.1';
 };
 
 
