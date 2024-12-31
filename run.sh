@@ -1,1 +1,1 @@
-npm run start2
+npm run start2 once

@@ -30,11 +30,13 @@ const isPortAvailable = (port) => {
     });
 };
 
+newwindow = true;
+
 // 1024 - 65535
 const getRandomPort = async () => {
-    // console.log("process.argv:",process.env['npm_lifecycle_script']);
+    // console.log("process.argv:",process.argv);
 
-    if (process.env['npm_lifecycle_script'] && process.env['npm_lifecycle_script'].includes('nodemon')) {
+    if (process.argv.includes('once')) {
         return 3000;
     }
 
@@ -85,6 +87,9 @@ io.on('connection', (socket) => {
     socket.emit('clipboardUpdated', readClipboardContent());
 });
 
+setTimeout(() => {
+    io.emit('refreshPage', true);
+}, 1500);
 
 
 const storage = multer.diskStorage({
@@ -265,6 +270,9 @@ app.get('/list-downloads', (req, res) => {
                 socket.on('uploadsUpdated', (data) => {
                     location.reload();
                 });
+                socket.on('refreshPage', data => {
+                    location.reload();
+                })
             }
         });
     </script>
@@ -411,8 +419,9 @@ app.get('/qrcode', async (req, res) => {
             // Windows
             exec(`start http://localhost:${PORT}`);
         } else if (os.platform() === 'darwin') {
-            // macOS
-            exec(`open http://localhost:${PORT}`);
+            // macOS 
+            // exec(`open http://localhost:${PORT}`);
+            exec(`open -a "Google Chrome" --args --new-tab http://localhost:${PORT}`);
         } else {
             redlog('The function of automatically opening the browser is not implemented, for non-Windows and macOS systems');
         }

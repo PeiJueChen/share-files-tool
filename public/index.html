@@ -377,6 +377,7 @@
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('clipboardContent').value = data.content;
+                        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
                     });
             }
             document.getElementById('getClipboard').addEventListener('click', () => {
@@ -390,6 +391,7 @@
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('clipboardContent').value = '';
+                        document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
                         navigator.clipboard?.writeText("");
                     })
                     .catch(error => {
@@ -410,6 +412,9 @@
                     document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
                     document.getElementById('clipboardContent').value = data;
                 });
+                socket.on('refreshPage', data => {
+                    location.reload();
+                })
             }
 
         });
