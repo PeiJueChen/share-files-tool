@@ -1,6 +1,6 @@
 {
   "name": "share-files-tool",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "A simple file sharing application.",
   "main": "src/server.js",
   "bin": {
@@ -30,6 +30,7 @@
   "author": "Jason Chan",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.21.1",
     "multer": "^1.4.5-lts.1",
     "qr-image": "^3.2.0",

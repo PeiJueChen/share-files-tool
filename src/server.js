@@ -8,6 +8,7 @@ const qr = require('qr-image');
 const { exec } = require('child_process');
 const net = require('net');
 const app = express();
+const cors = require('cors');
 const child_process = require("child_process");
 const http = require('http');
 const socketIo = require('socket.io');
@@ -16,6 +17,9 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 app.use(express.json());
+
+// 启用 CORS，对所有请求允许
+app.use(cors()); 
 
 let PORT = 3000;
 let _url;
