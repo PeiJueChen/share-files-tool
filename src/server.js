@@ -121,7 +121,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(express.static('public'));
-app.use('/uploads', express.static('src/uploads'));
+// app.use('/uploads', express.static('src/uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 function getSuccessHtml() {
     const responseHtml = `
