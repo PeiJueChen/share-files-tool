@@ -30,13 +30,14 @@ const isPortAvailable = (port) => {
     });
 };
 
-newwindow = true;
+newwindow = false;
 
 // 1024 - 65535
 const getRandomPort = async () => {
     // console.log("process.argv:",process.argv);
 
     if (process.argv.includes('once')) {
+        newwindow = true;
         return 3000;
     }
 
@@ -78,7 +79,7 @@ function readClipboardContent() {
 }
 
 fs.watchFile(clipboardPath, (curr, prev) => {
-    
+
     const content = readClipboardContent();
     io.emit('clipboardUpdated', content);
 });
@@ -141,6 +142,13 @@ function getSuccessHtml() {
                     justify-content: center;
                 }
             </style>
+            <script>
+                window.addEventListener('load', () => {
+                        setTimeout(() => {
+                            window.location.href='/list-downloads'
+                        }, 0);
+                    });
+            </script>
         </head>
         <body>
             <h1>The file uploads successfully！</h1>
@@ -218,6 +226,209 @@ app.get('/delete/:filename', (req, res) => {
     });
 });
 
+// 抽取预览页面的 HTML 模板
+function getPreviewHtml(fileType, fileUrl, filename) {
+    const isImage = fileType === 'image';
+    const isVideo = fileType === 'video';
+    const isPdf = fileType === 'pdf';
+    const isTxt = fileType === 'txt';
+    let content;
+    if (isImage) {
+        content = `<img id="media" src="${fileUrl}" alt="${filename}">`;
+    } else if (isVideo) {
+        content = `
+            <video id="media" controls>
+                <source src="${fileUrl}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        `;
+    } else if (isPdf) {
+        // content = `
+        //     <embed id="media" src="${fileUrl}" type="application/pdf" width="100%" height="100%">
+        // `;
+        content = `
+        <div id="media">
+        <div id="pdf-container" style="width: 100%; height: 80vh; overflow: auto; text-align: center;">
+            <canvas id="pdf-canvas"></canvas>
+        </div>
+        </div>
+        <div style="margin-top: 10px;">
+            <button id="prev-page" onclick="prevPage()">Previous</button>
+            <span id="page-num">Page: 1</span> / <span id="page-count">Loading...</span>
+            <button id="next-page" onclick="nextPage()">Next</button>
+        </div>
+        <script>
+            let pdfDoc = null;
+            let pageNum = 1;
+            let pageRendering = false;
+            let pageNumPending = null;
+            const scale = 1.5;
+
+            const url = '${fileUrl}';
+            const canvas = document.getElementById('pdf-canvas');
+            const ctx = canvas.getContext('2d');
+
+            function renderPage(num) {
+                pageRendering = true;
+                pdfDoc.getPage(num).then(page => {
+                    const viewport = page.getViewport({ scale });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                    };
+                    page.render(renderContext).promise.then(() => {
+                        pageRendering = false;
+                        if (pageNumPending !== null) {
+                            renderPage(pageNumPending);
+                            pageNumPending = null;
+                        }
+                    });
+                });
+
+                document.getElementById('page-num').textContent = 'Page: ' + num;
+            }
+
+            function queueRenderPage(num) {
+                if (pageRendering) {
+                    pageNumPending = num;
+                } else {
+                    renderPage(num);
+                }
+            }
+
+            function prevPage() {
+                if (pageNum <= 1) return;
+                pageNum--;
+                queueRenderPage(pageNum);
+            }
+
+            function nextPage() {
+                if (pageNum >= pdfDoc.numPages) return;
+                pageNum++;
+                queueRenderPage(pageNum);
+            }
+
+            pdfjsLib.getDocument(url).promise.then(pdf => {
+                pdfDoc = pdf;
+                document.getElementById('page-count').textContent = pdfDoc.numPages;
+                renderPage(pageNum);
+            }).catch(error => {
+                console.error('Failed to load PDF:', error);
+                document.getElementById('pdf-container').innerHTML = '<p>Failed to load PDF.</p>';
+            });
+        </script>
+    `;
+    } else if (isTxt) {
+        content = `
+            <iframe id="media" src="${fileUrl}" width="100%" height="100%" style="border: none;"></iframe>
+        `;
+    } else {
+        content = `<p style="font-size: 2.5rem;">The file type does not support preview.</p>`;
+    }
+
+    return `
+           <!DOCTYPE html>
+           <html>
+           <head>
+               <title>Preview</title>
+               <style>
+                   body {
+                       font-family: Arial, sans-serif;
+                       text-align: center;
+                       background-color: #f4f4f4;
+                       padding: 20px;
+                       margin: 0;
+                       height: 100vh;
+                       display: flex;
+                       flex-direction: column;
+                       justify-content: center;
+                       align-items: center;
+                   }
+                   #media {
+                       max-width: 100%;
+                       max-height: 100%;
+                       object-fit: contain;
+                   }
+                   button {
+                       background-color: #5cb85c;
+                       color: white;
+                       border: none;
+                       padding: 10px 20px;
+                       border-radius: 5px;
+                       cursor: pointer;
+                       font-size: 2rem;
+                       margin-top: 20px;
+                   }
+                   button:hover {
+                       background-color: #4cae4c;
+                   }
+                    .btn-group-div button:last-child {
+                     margin-left: 1rem;
+                    }
+               </style>
+               <script src="/js/pdf.min.js"></script>
+               <script src="/js/pdf.worker.min.js"></script>
+           </head>
+           <body>
+               <div id="media-container">
+                   ${content}
+               </div>
+               <div class="btn-group-div">
+               <button onclick="window.history.back()">Back</button>
+               <button onclick="window.location.href='/download/${filename}'">Download</button>
+               </div>
+               
+   
+               <script>
+                   function adjustMediaSize() {
+                       const media = document.getElementById('media');
+                       const container = document.getElementById('media-container');
+                       const screenWidth = window.innerWidth;
+                       const screenHeight = window.innerHeight;
+   
+                       if (screenWidth > screenHeight) {
+                        media.style.height = '85vh';
+                           media.style.width = 'auto';
+                       } else {
+                           media.style.width = '100vw';
+                           media.style.height = 'auto';
+                       }
+                   }
+   
+                   // 页面加载时调整媒体尺寸
+                   window.addEventListener('load', adjustMediaSize);
+                   // 窗口大小变化时调整媒体尺寸
+                   window.addEventListener('resize', adjustMediaSize);
+               </script>
+           </body>
+           </html>
+       `;
+}
+
+
+// 添加预览文件的路由
+app.get('/preview/:filename', (req, res) => {
+    const filename = req.params.filename;
+    // const filePath = path.join(uploadsDir, filename);
+    const fileUrl = `/uploads/${filename}`;
+    // 检查文件类型
+    if (filename.endsWith('.jpg') || filename.endsWith('.png') || filename.endsWith('.jpeg') || filename.endsWith('.gif')) {
+        res.send(getPreviewHtml('image', fileUrl, filename));
+    } else if (filename.endsWith('.mp4') || filename.endsWith('.webm') || filename.endsWith('.ogg')) {
+        res.send(getPreviewHtml('video', fileUrl, filename));
+    } else if (filename.endsWith('.pdf')) {
+        res.send(getPreviewHtml('pdf', fileUrl, filename));
+    } else if (filename.endsWith('.txt')) {
+        res.send(getPreviewHtml('txt', fileUrl, filename));
+    } else {
+        res.send(getPreviewHtml('none', fileUrl, filename));
+        // res.status(404).send('The file type does not support preview.');
+    }
+});
+
 app.get('/list-downloads', (req, res) => {
     fs.readdir(uploadsDir, (err, files) => {
 
@@ -225,6 +436,8 @@ app.get('/list-downloads', (req, res) => {
             console.log("err:", err);
             return res.status(500).send('Unable to read download folder');
         }
+
+        var isEmpty = files.length === 0;
         let fileListHtml = `
         <html>
         <head>
@@ -253,6 +466,34 @@ app.get('/list-downloads', (req, res) => {
                             font-size: 50px !important;
                             margin-right: 1.3rem;
                         }
+                        .preview-btn {
+                            padding: 1rem 1.3rem;
+                        }
+                        .btn-group {
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: center;
+                            align-items: center;
+                        }
+                        .btn-group a {
+                            background-color: #5cb85c;
+                            color: white;
+                            border: none;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            font-size: 2.5rem;
+                            padding: 1rem 1.3rem;
+                            white-space: pre-wrap;
+                        }
+                            .btn-group a:last-child {
+                                margin-top: 1rem;
+                            }
+
+                        .empty-msg {
+                        font-size: 2.5rem;
+                        text-align: center;
+                        margin-top: 5rem;
+                        }
             </style>
             <script src="/socket.io/socket.io.js"></script>
         </head>
@@ -274,16 +515,27 @@ app.get('/list-downloads', (req, res) => {
                     location.reload();
                 })
             }
+
+            if (${isEmpty}) {
+                setTimeout(() => {
+                    window.location.href='/'
+                }, 800);
+            }
         });
+        function previewFile(filename) {
+        // window.open("/preview/"+filename, '_blank', 'width=800,height=600');
+        window.location.href = "/preview/"+filename;
+        }
     </script>
-            
-            <table style="width: 100%; border-collapse: collapse;">
-                <thead>
+            <p class="empty-msg" style="display: ${isEmpty ? 'block' : 'none'};">Cann't Found Any File</p>
+            <table style="width: 100%; border-collapse: collapse;" style="display: ${isEmpty ? 'none' : 'table-header-group'};">
+                <thead style="display: ${isEmpty ? 'none' : 'table-header-group'};">
                     <tr>
                         <th style="border: 1px solid #ddd; padding: 16px; height: 80px;">File Name</th>
                         <th style="border: 1px solid #ddd; padding: 16px; height: 80px;">Create Date</th>
                         <th style="border: 1px solid #ddd; padding: 16px; height: 80px;">Size (MB)</th>
                         <th style="border: 1px solid #ddd; padding: 16px; height: 80px;">Action</th>
+                        <th style="border: 1px solid #ddd; padding: 16px; height: 80px;">Preview</th>
                     </tr>
                 </thead>
                 <tbody>`;
@@ -300,8 +552,13 @@ app.get('/list-downloads', (req, res) => {
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word;">${formattedDate}</td>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${sizeInMB}</td>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word;">
-                        <a href="/download/${file}" download>Download</a> / 
-                        <a href="/delete/${file}" onclick="return confirm('Surely want to delete?')">Delete</a>
+                        <div class="btn-group">
+                        <a href="/download/${file}" download>Download</a>
+                        <a href="/delete/${file}" onclick="return confirm('Surely want to delete?')">   Delete   </a>
+                        </div>
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word;">
+                        <button class="preview-btn" onclick="previewFile('${file}')">Preview</button> 
                     </td>
                 </tr>`;
 
@@ -316,14 +573,16 @@ app.get('/list-downloads', (req, res) => {
     });
 });
 
+
+
 // 路由：共享粘贴板
 app.post('/shareClipboard', async (req, res) => {
     try {
         const content = req.body?.content;
-        
+
         fs.writeFileSync(clipboardPath, content || "", 'utf8');
 
-        res.json({ message: 'shared: ' + content , content });
+        res.json({ message: 'shared: ' + content, content });
     } catch (error) {
 
         res.status(500).json({ message: 'Failed to read clipboard contents:', error });
@@ -333,7 +592,7 @@ app.post('/shareClipboard', async (req, res) => {
 // 路由：获取粘贴板
 app.get('/getClipboard', (req, res) => {
     const content = fs.readFileSync(clipboardPath, 'utf8');
-    
+
     res.json({ content: content || "" });
 });
 app.post('/clearClipboard', (req, res) => {
@@ -382,7 +641,7 @@ const getIpAddress = async () => {
             currentIp = ip.trim();
             return currentIp;
         } catch (error) {
-            
+
         }
     }
     currentIp = '127.0.0.1';
@@ -420,8 +679,11 @@ app.get('/qrcode', async (req, res) => {
             exec(`start http://localhost:${PORT}`);
         } else if (os.platform() === 'darwin') {
             // macOS 
-            // exec(`open http://localhost:${PORT}`);
-            exec(`open -a "Google Chrome" --args --new-tab http://localhost:${PORT}`);
+            if (newwindow) {
+                exec(`open -a "Google Chrome" --args --new-tab http://localhost:${PORT}`);
+            } else {
+                exec(`open http://localhost:${PORT}`);
+            }
         } else {
             redlog('The function of automatically opening the browser is not implemented, for non-Windows and macOS systems');
         }
