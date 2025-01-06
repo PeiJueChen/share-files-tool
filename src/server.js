@@ -18,6 +18,7 @@ const io = socketIo(server);
 app.use(express.json());
 
 let PORT = 3000;
+let _url;
 
 const isPortAvailable = (port) => {
     return new Promise((resolve) => {
@@ -412,8 +413,15 @@ function getPreviewHtml(fileType, fileUrl, filename) {
 // 添加预览文件的路由
 app.get('/preview/:filename', (req, res) => {
     const filename = req.params.filename;
-    // const filePath = path.join(uploadsDir, filename);
-    const fileUrl = `/uploads/${filename}`;
+    const filePath = path.join(__dirname, 'uploads', filename);
+    // const fileUrl = `/uploads/${filename}`;
+    const fileUrl = `${_url}/uploads/${filename}`;
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).send('File not found');
+    }
+    
+    // const fileUrl = `/uploads/${filename}`;
     // 检查文件类型
     if (filename.endsWith('.jpg') || filename.endsWith('.png') || filename.endsWith('.jpeg') || filename.endsWith('.gif')) {
         res.send(getPreviewHtml('image', fileUrl, filename));
@@ -668,6 +676,7 @@ app.get('/qrcode', async (req, res) => {
     PORT = await getRandomPort();
     const ipAddress = await getIpAddress();
     const url = `http://${ipAddress}:${PORT}`;
+    _url = url;
     server.listen(PORT, async () => {
 
         log(`\nrun at: ${url}`);
