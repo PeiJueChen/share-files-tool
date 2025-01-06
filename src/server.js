@@ -181,29 +181,6 @@ app.get('/upload-success', (req, res) => {
     res.send(getSuccessHtml());
 });
 
-// app.post('/upload', upload.single('file'), (req, res) => {
-//     const responseHtml = `
-//         <html>
-//         <head>
-//             <title>successfully</title>
-//             <style>
-//                 body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; text-align: center;}
-//                 h1 { color: #333; font-size: 2.5rem; }
-//                 button { background-color: #5cb85c; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 2.5rem; }
-//                 button:hover { background-color: #4cae4c; }
-//                 p { text-align: center; font-size: 2.5rem; margin: 4rem 0;}
-//             </style>
-//         </head>
-//         <body>
-//             <h1>The file uploads successfully.！</h1>
-//             <p>Can be downloaded at: <a href="/uploads/${req.file.filename}" download>Download</a></p>
-//             <button style="margin-top: 20px;" onclick="window.location.href='/'">Back to Home</button>
-//         </body>
-//         </html>
-//     `;
-//     res.send(responseHtml);
-// });
-
 
 app.get('/download/:filename', (req, res) => {
     const filePath = path.join(uploadsDir, req.params.filename);
@@ -249,9 +226,6 @@ function getPreviewHtml(fileType, fileUrl, filename) {
             </video>
         `;
     } else if (isPdf) {
-        // content = `
-        //     <embed id="media" src="${fileUrl}" type="application/pdf" width="100%" height="100%">
-        // `;
         content = `
         <div id="media">
         <div id="pdf-container" style="width: 100%; height: 80vh; overflow: auto; text-align: center;">
@@ -536,7 +510,6 @@ app.get('/list-downloads', (req, res) => {
             }
         });
         function previewFile(filename) {
-        // window.open("/preview/"+filename, '_blank', 'width=800,height=600');
         window.location.href = "/preview/"+filename;
         }
     </script>
@@ -663,12 +636,8 @@ const getIpAddress = async () => {
 
 
 app.get('/qrcode', async (req, res) => {
-    const ipAddress = await getIpAddress();
-    const url = `http://${ipAddress}:${PORT}`;
     try {
-        // const qrCodeDataURL = await QRCode.toDataURL(url);
-        // res.send(qrCodeDataURL); // 发送二维码的 Data URL
-        const qrCodeImage = qr.imageSync(url, { type: 'png' });
+        const qrCodeImage = qr.imageSync(_url, { type: 'png' });
         const base64QRImage = Buffer.from(qrCodeImage).toString('base64');
         const dataUrl = `data:image/png;base64,${base64QRImage}`;
         res.send(dataUrl);
