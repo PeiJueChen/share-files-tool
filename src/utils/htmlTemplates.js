@@ -174,7 +174,7 @@ function getPreviewHtml(fileType, fileUrl, filename) {
                 button:hover {
                     background-color: #4cae4c;
                 }
-                .btn-group-div button:last-child {
+                .btn-group-div button {
                     margin-left: 1rem;
                 }
             </style>
@@ -188,6 +188,9 @@ function getPreviewHtml(fileType, fileUrl, filename) {
             <div class="btn-group-div">
                 <button onclick="window.history.back()">Back</button>
                 <button onclick="window.location.href='/download/${filename}'">Download</button>
+                <button >
+                <a href="/delete/${filename}" onclick="return confirm('Surely want to delete?')">Delete</a>
+                </button>
             </div>
             <script>
                 function adjustMediaSize() {
@@ -315,14 +318,14 @@ function getFileListHtml(files, uploadsDir) {
                     </tr>
                 </thead>
                 <tbody>`;
-        files.forEach(file => {
-            const filePath = path.join(uploadsDir, file);
-            const stats = fs.statSync(filePath);
-            const creationDate = new Date(stats.birthtime);
-            const formattedDate = `${creationDate.getMonth() + 1}-${creationDate.getDate()}-${creationDate.getFullYear()} ${creationDate.getHours().toString().padStart(2, '0')}:${creationDate.getMinutes().toString().padStart(2, '0')}:${creationDate.getSeconds().toString().padStart(2, '0')}`;
-            const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
+    files.forEach(file => {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        const creationDate = new Date(stats.birthtime);
+        const formattedDate = `${creationDate.getMonth() + 1}-${creationDate.getDate()}-${creationDate.getFullYear()} ${creationDate.getHours().toString().padStart(2, '0')}:${creationDate.getMinutes().toString().padStart(2, '0')}:${creationDate.getSeconds().toString().padStart(2, '0')}`;
+        const sizeInMB = (stats.size / (1024 * 1024)).toFixed(2);
 
-            fileListHtml += `
+        fileListHtml += `
                 <tr>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word; word-break: break-all;">${file}</td>
                     <td style="border: 1px solid #ddd; padding: 30px 10px;word-wrap: break-word;">${formattedDate}</td>
@@ -338,8 +341,8 @@ function getFileListHtml(files, uploadsDir) {
                     </td>
                 </tr>`;
 
-        });
-        fileListHtml += `
+    });
+    fileListHtml += `
             </tbody>
             </table>
             <button style="margin-top: 3rem;" onclick="window.location.href='/'">Back to Home</button>
