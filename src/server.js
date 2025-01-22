@@ -8,6 +8,8 @@ const { getRandomPort, getIpAddress } = require('./utils/network');
 const { log, redlog } = require('./utils/log');
 const { setupRoutes, setIpUrl } = require('./routes');
 const { setupSocket } = require('./socket');
+const { promisify } = require('util');
+const chmod = promisify(fs.chmod);
 
 const app = express();
 const server = http.createServer(app);
@@ -29,8 +31,21 @@ try {
         fs.mkdirSync(uploadsDir);
     }
 } catch (error) {
-    console.log(error);
-    redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${__dirname}`);
+
+    chmod(__dirname, 0o777).then(r => {
+        try {
+            if (!fs.existsSync(uploadsDir)) {
+                fs.mkdirSync(uploadsDir);
+            }
+        } catch (error) {
+            console.log(error);
+            redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${__dirname}`);
+        }
+    }).catch(error => {
+        console.log(error);
+        redlog(`If catch a permission error, try to run with sudo: sudo chmod -R 777 ${__dirname}`);
+    });
+
 }
 
 // 设置路由

@@ -7,14 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        .title {
+            margin-top: 0;
+        }
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
             background-color: #f4f4f4;
             position: relative;
-            /* width: 90vw; */
-            /* height: 90vh; */
         }
 
         h1,
@@ -28,11 +30,46 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            position: relative;
         }
 
         input[type="file"] {
-            margin-top: 10px;
-            margin-bottom: 20px;
+            display: none;
+            /* 隐藏文件输入框 */
+        }
+
+        .file-select-container {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .file-select-container button:first-child {
+            margin-right: 10px;
+        }
+
+        .file-select {
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn-submit {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .file-select:hover {
+            background-color: #4cae4c;
         }
 
         button {
@@ -58,7 +95,6 @@
             overflow: hidden;
             margin-bottom: 0px;
             display: none;
-            /* Initially hidden */
         }
 
         .progress-bar {
@@ -108,13 +144,15 @@
         }
 
         .file-list {
-            margin-top: 20px;
+            /* margin-top: 20px; */
             text-align: left;
             background-color: #fff;
-            border: 1px solid #ddd;
+            /* border: 1px solid #ddd; */
             border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin-bottom: 0.3rem;
+            /* padding: 15px; */
+            /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); */
         }
 
         .file-list h2 {
@@ -148,20 +186,48 @@
         /* Delete button style */
         .delete-button {
             margin-left: 10px;
-            /* Left margin of 10px */
             background-color: #d9534f;
-            /* Delete button background color */
             color: white;
             border: none;
             padding: 5px 10px;
-            /* Delete button padding */
             border-radius: 5px;
             cursor: pointer;
         }
 
         .delete-button:hover {
             background-color: #c9302c;
-            /* Change background color on hover */
+        }
+
+        /* Drag and drop area styles */
+        #drop-area {
+            border: 2px dashed #ccc;
+            border-radius: 20px;
+            /* margin: 20px auto; */
+            margin-bottom: 1rem;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #drop-area.highlight {
+            border-color: purple;
+            background: #f8f8f8;
+        }
+
+        #drag-text {
+            margin-top: 0;
+            margin-bottom: 10px;
+            text-decoration: underline;
+            color: #5cb85c;
+        }
+
+        #uploadForm {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
     </style>
     <style>
@@ -176,6 +242,12 @@
             flex-direction: column;
         }
 
+        .share-buttons-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .share-buttons button {
             background-color: #4CAF50;
             /* 绿色 */
@@ -188,6 +260,11 @@
             transition: background-color 0.3s;
             width: 100%;
             font-size: 16px;
+            margin-right: 1rem;
+        }
+
+        .share-buttons button:last-child {
+            margin-right: 0;
         }
 
         .share-buttons button:hover {
@@ -228,11 +305,10 @@
         }
     </style>
     <script src="/socket.io/socket.io.js"></script>
-    <!-- <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script> -->
 </head>
 
 <body>
-    <h1>Files upload</h1>
+    <h1 class="title">Files upload</h1>
 
     <!-- Progress Bar -->
     <div class="progress-container" id="progressContainer">
@@ -240,15 +316,25 @@
     </div>
 
     <form id="uploadForm">
-        <label for="fileInput">Choose Files:</label>
+
         <input type="file" name="files" id="fileInput" multiple required>
-        <button type="submit">Upload</button>
+        <div id="drop-area" onclick="document.getElementById('fileInput').click();">
+            <div id="drag-text">Drag files into this area or click to select files</div>
+        </div>
+
+        <div class="file-list" id="fileList">
+            <div>Selected Files:</div>
+            <ul id="fileNames"></ul>
+        </div>
+
+        <div class="file-select-container">
+            <!-- <button type="button" class="file-select" onclick="document.getElementById('fileInput').click();">Select
+                Files</button> -->
+            <button type="submit" class="btn-submit">Upload</button>
+        </div>
     </form>
 
-    <div class="file-list" id="fileList">
-        <h2>Selected Files:</h2>
-        <ul id="fileNames"></ul>
-    </div>
+
 
     <div class="view-files">
         <h2>View your files? <a href="/list-downloads">(Click here)</a></h2>
@@ -260,9 +346,11 @@
     </div>
 
     <div class="share-buttons">
-        <button id="shareClipboard">Share Content</button>
-        <button id="getClipboard">Get Content</button>
-        <button id="clearClipboard">Clear Content</button>
+        <div class="share-buttons-container">
+            <button id="shareClipboard">Share<br />Content</button>
+            <button id="getClipboard">Get<br />Content</button>
+            <button id="clearClipboard">Clear<br />Content</button>
+        </div>
         <span class="last-updated">last updated: <span id="lastUpdated"></span></span>
         <textarea id="clipboardContent" rows="4" cols="50" placeholder="Paste your content here..."></textarea>
     </div>
@@ -276,55 +364,72 @@
             }
             loadQRCode();
 
-            function fileInputHandler() {
+            var selectedDataTransfer = new DataTransfer();
+            selectedDataTransfer.items.clear();
+
+            function selectFiles(files) {
                 const fileInput = document.getElementById('fileInput');
                 const fileNamesList = document.getElementById('fileNames');
+                fileNamesList.innerHTML = ''; // Clear existing file list
+
+                let sourceFiles = Array.from(files);
+                sourceFiles.forEach(f => {
+                    if (!Array.from(selectedDataTransfer.files).find(ff => ff.name == f.name)) {
+                        selectedDataTransfer.items.add(f)
+                    }
+                })
+
+                targetFiles = selectedDataTransfer.files;
+
+                fileInput.files = targetFiles
+
+                let selectedFiles = Array.from(targetFiles).map(file => file.name); // Store the name of input files
+
+                // Render the selected files list
+                selectedFiles.forEach((fileName) => {
+                    const li = document.createElement('li');
+                    const div = document.createElement('div');
+                    div.textContent = fileName;
+                    div.className = 'file-name';
+                    li.appendChild(div);
+
+                    // Create delete button
+                    const delButton = document.createElement('button');
+                    delButton.textContent = 'Del'; // Set delete button text
+                    delButton.className = 'delete-button'; // Add delete button style class
+                    delButton.onclick = function () {
+                        const index = selectedFiles.indexOf(fileName);
+                        if (index > -1) {
+                            selectedFiles.splice(index, 1); // Remove the file from the array
+                            const file = Array.from(selectedDataTransfer.files).find(f => f.name === fileName);
+                            selectedDataTransfer.items.remove(file); // Remove the file from the data transfer object
+                        }
+                        const fileInput = document.getElementById('fileInput');
+                        fileInput.files = selectedDataTransfer.files; // Update the input files
+                        li.remove(); // Remove the file name from the list
+                    };
+
+                    li.appendChild(delButton); // Attach delete button to list item
+                    fileNamesList.appendChild(li); // Add to the list
+                });
+            }
+
+            function fileInputHandler() {
+                const fileInput = document.getElementById('fileInput');
+                // const fileNamesList = document.getElementById('fileNames');
                 const progressContainer = document.getElementById('progressContainer');
                 const progressBar = document.getElementById('progressBar');
 
                 let selectedFiles = []; // Array to hold selected files
 
                 fileInput.addEventListener('change', function () {
-                    fileNamesList.innerHTML = ''; // Clear existing file list
-                    selectedFiles = Array.from(fileInput.files).map(file => file.name); // Store the name of input files
-
-
-                    // Render the selected files list
-                    selectedFiles.forEach((fileName) => {
-                        const li = document.createElement('li');
-                        const div = document.createElement('div');
-                        div.textContent = fileName;
-                        div.className = 'file-name';
-                        li.appendChild(div);
-
-                        // Create delete button
-                        const delButton = document.createElement('button');
-                        delButton.textContent = 'Del'; // Set delete button text
-                        delButton.className = 'delete-button'; // Add delete button style class
-                        delButton.onclick = function () {
-                            const index = selectedFiles.indexOf(fileName);
-                            if (index > -1) {
-                                selectedFiles.splice(index, 1); // Remove the file from the array
-                            }
-                            // Update the file input to reflect changes
-                            const dataTransfer = new DataTransfer();
-                            selectedFiles.forEach(name => {
-                                const file = Array.from(fileInput.files).find(f => f.name === name);
-                                if (file) {
-                                    dataTransfer.items.add(file); // Keep only the remaining files
-                                }
-                            });
-                            fileInput.files = dataTransfer.files; // Update the input files
-                            li.remove(); // Remove the file name from the list
-                        };
-
-                        li.appendChild(delButton); // Attach delete button to list item
-                        fileNamesList.appendChild(li); // Add to the list
-                    });
+                    selectFiles(fileInput.files);
                 });
 
                 document.getElementById('uploadForm').addEventListener('submit', function (event) {
                     event.preventDefault(); // Prevent the standard form submission
+                    if (!selectedDataTransfer.files.length) return;
+
                     const formData = new FormData(this); // Create a FormData object
 
                     // Show the progress bar
@@ -348,6 +453,7 @@
                             setTimeout(() => {
                                 window.location.href = '/upload-success'; // Redirect on success
                             }, 500);
+                            selectedDataTransfer.items.clear(); // Clear the data transfer object
                         }
                     };
                     xhr.send(formData); // Send the FormData
@@ -355,10 +461,48 @@
             }
             fileInputHandler();
 
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('fileInput');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) {
+                dropArea.classList.add('highlight');
+            }
+
+            function unhighlight(e) {
+                dropArea.classList.remove('highlight');
+            }
+
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                let dt = e.dataTransfer;
+                let files = dt.files;
+                selectFiles(files);
+            }
+
             document.getElementById('shareClipboard').addEventListener('click', () => {
                 shareClipboard();
             });
-
 
             const shareClipboard = async () => {
                 const content = document.getElementById('clipboardContent').value;
@@ -375,25 +519,21 @@
                 })).then(response => response.json())
                     .then(data => {
                         if (data?.content) {
-
                             alert(data.message);
-
                         }
                     });
-
             };
-
 
             const fetctClipboard = () => {
                 fetch('/getClipboard')
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('clipboardContent').value = data.content;
-                        document.getElementById('clipboardContent').select();  
+                        document.getElementById('clipboardContent').select();
                         document.execCommand("copy");
                         document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
                     });
-            }
+            };
             document.getElementById('getClipboard').addEventListener('click', () => {
                 fetctClipboard();
             });
@@ -414,7 +554,6 @@
             });
 
             fetctClipboard();
-
         });
     </script>
 
@@ -428,11 +567,9 @@
                 });
                 socket.on('refreshPage', data => {
                     location.reload();
-                })
+                });
             }
-
         });
-
     </script>
 </body>
 

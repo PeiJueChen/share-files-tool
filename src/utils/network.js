@@ -14,9 +14,11 @@ const isPortAvailable = (port) => {
 };
 
 const getRandomPort = async () => {
-    let port;
+    let port = 3333;
     let isAvailable = false;
 
+    if (await isPortAvailable(port)) return port;
+    
     while (!isAvailable) {
         port = Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024;
         isAvailable = await isPortAvailable(port);
