@@ -102,7 +102,7 @@ function setupRoutes(app, uploadsDir, clipboardPath, dirname__, ) {
 
     app.post('/shareClipboard', (req, res) => {
         try {
-            const content = req.body?.content;
+            const content = req.body && req.body.content;
     
             fs.writeFileSync(clipboardPath, content || "", 'utf8');
     

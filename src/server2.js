@@ -564,7 +564,7 @@ app.get('/list-downloads', (req, res) => {
 // 路由：共享粘贴板
 app.post('/shareClipboard', async (req, res) => {
     try {
-        const content = req.body?.content;
+        const content = req.body && req.body.content;
 
         fs.writeFileSync(clipboardPath, content || "", 'utf8');
 
