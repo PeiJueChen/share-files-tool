@@ -1,6 +1,6 @@
 {
   "name": "share-files-tool",
-  "version": "1.2.14",
+  "version": "1.2.15",
   "description": "A simple file sharing application.",
   "main": "src/server.js",
   "bin": {

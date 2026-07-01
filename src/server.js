@@ -191,8 +191,15 @@ app.get('/download/:filename', (req, res) => {
         }
         res.download(filePath, (err) => {
             if (err) {
-                console.error('Error downloading file:', err);
-                res.status(500).send('Could not download file.');
+                // ECONNABORTED means the client cancelled the download (e.g., navigated away) - not a real error
+                if (err.code === 'ECONNABORTED') {
+                    console.warn('Download aborted by client:', req.params.filename);
+                } else {
+                    console.error('Error downloading file:', err);
+                    if (!res.headersSent) {
+                        res.status(500).send('Could not download file.');
+                    }
+                }
             }
         });
     });
